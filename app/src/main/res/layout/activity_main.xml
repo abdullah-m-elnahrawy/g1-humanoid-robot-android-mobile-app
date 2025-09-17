@@ -6,151 +6,140 @@
 
     <LinearLayout
         android:orientation="vertical"
-        android:padding="16dp"
+        android:padding="24dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Audio streaming section (unchanged behavior) -->
+        <!-- Audio Stream -->
         <TextView
-            android:text="@string/section_audio"
+            android:text="Audio Stream"
             android:textStyle="bold"
-            android:textSize="18sp"
+            android:textSize="22sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_marginTop="8dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
 
             <EditText
                 android:id="@+id/txtGroupIp"
-                android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_group_ip"
-                android:inputType="textUri" />
+                android:layout_weight="1"
+                android:hint="239.255.0.1"
+                android:inputType="text"
+                android:maxLines="1" />
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="match_parent" />
 
             <EditText
                 android:id="@+id/txtPort"
-                android:layout_marginStart="8dp"
                 android:layout_width="96dp"
                 android:layout_height="wrap_content"
-                android:hint="@string/hint_port"
-                android:inputType="number" />
+                android:hint="5555"
+                android:inputType="number"
+                android:maxLines="1" />
         </LinearLayout>
 
         <CheckBox
             android:id="@+id/chkUnicast"
-            android:text="@string/label_unicast"
-            android:layout_marginTop="4dp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:text="Send Unicast (instead of Multicast)"
+            android:layout_marginTop="8dp" />
 
         <Button
             android:id="@+id/btnPTT"
-            android:text="@string/ptt_hold"
-            android:layout_marginTop="12dp"
             android:layout_width="match_parent"
-            android:layout_height="56dp" />
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="HOLD TO TALK" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:background="#303030" />
+            android:background="#33000000"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="12dp" />
 
-        <!-- NEW: Robot control target -->
+        <!-- Robot Control (UDP over multicast, uses robot_id only) -->
         <TextView
-            android:layout_marginTop="12dp"
-            android:text="@string/section_robot_control"
+            android:text="Robot Control (UDP)"
             android:textStyle="bold"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
+        <EditText
+            android:id="@+id/txtRobotId"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <EditText
-                android:id="@+id/txtRobotIp"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_robot_ip"
-                android:inputType="textUri" />
-
-            <EditText
-                android:id="@+id/txtRobotPort"
-                android:layout_marginStart="8dp"
-                android:layout_width="96dp"
-                android:layout_height="wrap_content"
-                android:hint="@string/hint_port"
-                android:text="5577"
-                android:inputType="number" />
-        </LinearLayout>
+            android:layout_height="wrap_content"
+            android:hint="Robot ID (e.g., hasan)"
+            android:inputType="text"
+            android:maxLines="1"
+            android:layout_marginTop="10dp" />
 
         <Button
             android:id="@+id/btnSaveRobot"
-            android:text="@string/btn_save_robot"
-            android:layout_marginTop="8dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="56dp"
+            android:text="Save Robot ID"
+            android:layout_marginTop="12dp" />
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="12dp"
-            android:background="#303030" />
+            android:background="#33000000"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="10dp" />
 
-        <!-- NEW: Motion buttons -->
         <TextView
-            android:layout_marginTop="12dp"
-            android:text="@string/section_motions"
+            android:text="Motions"
             android:textStyle="bold"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <LinearLayout
             android:orientation="horizontal"
-            android:layout_marginTop="8dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp">
 
             <Button
                 android:id="@+id/btnShake"
-                android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
-                android:text="@string/motion_shake" />
+                android:layout_weight="1"
+                android:text="Shake Hands" />
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="match_parent" />
 
             <Button
                 android:id="@+id/btnSalute"
-                android:layout_marginStart="8dp"
-                android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="56dp"
-                android:text="@string/motion_salute" />
+                android:layout_weight="1"
+                android:text="Military Salute" />
         </LinearLayout>
 
-        <LinearLayout
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp"
+        <Button
+            android:id="@+id/btnWelcome"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="56dp"
+            android:layout_marginTop="12dp"
+            android:text="Welcome Visitors" />
 
-            <Button
-                android:id="@+id/btnWelcome"
-                android:layout_weight="1"
-                android:layout_width="0dp"
-                android:layout_height="56dp"
-                android:text="@string/motion_welcome" />
-        </LinearLayout>
-
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="24dp" />
     </LinearLayout>
 </ScrollView>
+

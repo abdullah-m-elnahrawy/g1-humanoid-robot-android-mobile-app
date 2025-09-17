@@ -2,11 +2,7 @@ package com.abdullah.g1edu.micstream
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.media.*
-import android.os.Build
 import android.os.Bundle
-import android.text.InputFilter
-import android.text.InputType
 import android.view.MotionEvent
 import android.view.View
 import android.widget.*
@@ -14,7 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-// Defaults matching your robot’s listener (mobile multicast pipeline)
+// Multicast defaults for the mic stream (match robot listener)
 private const val defaultGroupIp = "239.255.0.1"
 private const val defaultPort = 5555
 
@@ -23,17 +19,17 @@ class MainActivity : AppCompatActivity() {
     private lateinit var streamer: AudioStreamer
     private lateinit var motion: MotionController
 
+    // UI
     private lateinit var txtGroupIp: EditText
     private lateinit var txtPort: EditText
     private lateinit var chkUnicast: CheckBox
     private lateinit var btnPTT: Button
 
-    // NEW: robot control target
-    private lateinit var txtRobotIp: EditText
-    private lateinit var txtRobotPort: EditText
+    // Robot ID (for control multicast)
+    private lateinit var txtRobotId: EditText
     private lateinit var btnSaveRobot: Button
 
-    // NEW: motion buttons
+    // Motion buttons
     private lateinit var btnShake: Button
     private lateinit var btnSalute: Button
     private lateinit var btnWelcome: Button
@@ -41,7 +37,16 @@ class MainActivity : AppCompatActivity() {
     private val reqPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (!granted) Toast.makeText(this, "Mic permission required.", Toast.LENGTH_LONG).show()
+        if (!granted) Toast.makeText(this, "Microphone permission required.", Toast.LENGTH_LONG).show()
+    }
+
+    private fun haveMicPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+                PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun requestMic() {
+        reqPermission.launch(Manifest.permission.RECORD_AUDIO)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -55,67 +60,49 @@ class MainActivity : AppCompatActivity() {
         chkUnicast = findViewById(R.id.chkUnicast)
         btnPTT     = findViewById(R.id.btnPTT)
 
-        txtRobotIp   = findViewById(R.id.txtRobotIp)
-        txtRobotPort = findViewById(R.id.txtRobotPort)
+        txtRobotId   = findViewById(R.id.txtRobotId)
         btnSaveRobot = findViewById(R.id.btnSaveRobot)
 
-        btnShake  = findViewById(R.id.btnShake)
-        btnSalute = findViewById(R.id.btnSalute)
-        btnWelcome= findViewById(R.id.btnWelcome)
+        btnShake   = findViewById(R.id.btnShake)
+        btnSalute  = findViewById(R.id.btnSalute)
+        btnWelcome = findViewById(R.id.btnWelcome)
 
-        // Restore last robot control target
-        val (curIp, curPort) = motion.currentRobotControl()
-        txtRobotIp.setText(curIp ?: "")
-        txtRobotPort.setText(curPort.toString())
-
-        btnSaveRobot.setOnClickListener {
-            val ip = txtRobotIp.text.toString()
-            val p  = txtRobotPort.text.toString().toIntOrNull() ?: 5577
-            motion.saveRobotControl(ip, p)
-            Toast.makeText(this, "Saved Robot Control $ip:$p", Toast.LENGTH_SHORT).show()
-        }
-
-        // Initialize UI defaults for audio target
+        // Pre-fill (and effectively ignore) IP/port UI — multicast only
         txtGroupIp.setText(defaultGroupIp)
         txtPort.setText(defaultPort.toString())
+        chkUnicast.visibility = View.GONE
 
-        // PTT: create a streamer with current UI values on press, stop on release
+        // Restore & save robot_id
+        txtRobotId.setText(motion.currentRobotId())
+        btnSaveRobot.setOnClickListener {
+            val id = txtRobotId.text.toString().ifBlank { "hasan" }
+            motion.saveRobotId(id)
+            Toast.makeText(this, "Saved Robot ID: $id", Toast.LENGTH_SHORT).show()
+        }
+
+        // Build the AudioStreamer using your constructor signature
+        streamer = AudioStreamer(
+            /* ctx = */ this,
+            /* groupIp = */ defaultGroupIp,
+            /* port = */ defaultPort,
+            /* useUnicast = */ false,
+            /* unicastIp = */ "",
+            /* preferVoiceComm = */ true,
+            /* onLog = */ { _ -> },
+            /* onState = */ { _ -> }
+        )
+
+        // PTT
         btnPTT.setOnTouchListener { _: View, event: MotionEvent ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     if (!haveMicPermission()) requestMic()
-
-                    // Stop any existing instance before creating a new one
-                    if (::streamer.isInitialized) {
-                        try { streamer.stop() } catch (_: Throwable) {}
-                    }
-
-                    val groupIp: String = txtGroupIp.text.toString().ifBlank { defaultGroupIp }
-                    val port: Int = txtPort.text.toString().toIntOrNull() ?: defaultPort
-                    val useUnicast: Boolean = chkUnicast.isChecked
-                    // Ensure non-null for constructor
-                    val unicastIp: String = if (useUnicast) groupIp else ""
-
-                    // New API: configure via constructor
-                    streamer = AudioStreamer(
-                        context = this,
-                        groupIp = groupIp,
-                        port = port,
-                        useUnicast = useUnicast,
-                        unicastIp = unicastIp,           // always non-null
-                        preferVoiceComm = true,
-                        onLog = { msg -> android.util.Log.d("G1MicStream", msg) },
-                        onState = { /* state -> update status UI if desired */ }
-                    )
                     streamer.start()
-
                     btnPTT.text = getString(R.string.ptt_speaking)
                     btnPTT.isPressed = true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (::streamer.isInitialized) {
-                        try { streamer.stop() } catch (_: Throwable) {}
-                    }
+                    streamer.stop()
                     btnPTT.text = getString(R.string.ptt_hold)
                     btnPTT.isPressed = false
                 }
@@ -123,27 +110,14 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // NEW: motion buttons -> send UDP JSON to robot control port
-        btnShake.setOnClickListener {
-            motion.sendMotionFile("shake_hands.seq")
-        }
-        btnSalute.setOnClickListener {
-            motion.sendMotionFile("military_salute.seq")
-        }
-        btnWelcome.setOnClickListener {
-            motion.sendMotionFile("welcome_visitors.seq")
-        }
-    }
-
-    private fun haveMicPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-    }
-    private fun requestMic() {
-        reqPermission.launch(Manifest.permission.RECORD_AUDIO)
+        // Motion buttons → multicast JSON (no IP typing), includes robot_id
+        btnShake.setOnClickListener  { motion.sendMotionFile("shake_hands.seq") }
+        btnSalute.setOnClickListener { motion.sendMotionFile("military_salute.seq") }
+        btnWelcome.setOnClickListener{ motion.sendMotionFile("welcome_visitors.seq") }
     }
 
     override fun onDestroy() {
-        try { if (::streamer.isInitialized) streamer.stop() } catch (_: Throwable) {}
+        try { streamer.stop() } catch (_: Throwable) {}
         super.onDestroy()
     }
 }
