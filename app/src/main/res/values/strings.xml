@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">G1 Mic Stream</string>
+
+    <!-- Audio -->
+    <string name="section_audio">Audio Stream</string>
+    <string name="hint_group_ip">Group/Unicast IP</string>
+    <string name="hint_port">Port</string>
+    <string name="label_unicast">Send Unicast (instead of Multicast)</string>
+    <string name="ptt_hold">HOLD TO TALK</string>
+    <string name="ptt_speaking">RELEASE TO STOP</string>
+
+    <!-- Robot control -->
+    <string name="section_robot_control">Robot Control (UDP)</string>
+    <string name="hint_robot_ip">Robot Control IP</string>
+    <string name="btn_save_robot">Save Robot Target</string>
+
+    <!-- Motions -->
+    <string name="section_motions">Motions</string>
+    <string name="motion_shake">Shake Hands</string>
+    <string name="motion_salute">Military Salute</string>
+    <string name="motion_welcome">Welcome Visitors</string>
+</resources>

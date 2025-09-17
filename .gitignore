@@ -1,0 +1,40 @@
+# --- Android project ignores (safe to commit source only) ---
+# Build outputs
+**/build/
+.cxx/
+.externalNativeBuild/
+captures/
+
+# Gradle
+.gradle/
+**/.gradle/
+.gradle/**
+
+# IDE
+.idea/
+*.iml
+
+# Local machine config / secrets
+local.properties
+*.jks
+*.keystore
+keystore.properties
+signing.properties
+
+# App packages / artifacts
+*.apk
+*.ap_
+*.aab
+
+# Intermediates & logs
+*.dex
+*.class
+*.log
+
+# OS / misc
+.DS_Store
+Thumbs.db
+
+# If you want to force-keep scripts:
+!run.sh
+
