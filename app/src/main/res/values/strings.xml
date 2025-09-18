@@ -1,22 +1,37 @@
 <resources>
     <string name="app_name">G1 Mic Stream</string>
 
-    <!-- Audio -->
+    <!-- Sections -->
     <string name="section_audio">Audio Stream</string>
+    <string name="section_robot_control">Robot Control (UDP)</string>
+    <string name="section_motions">Motions</string>
+
+    <!-- Legacy hints (kept) -->
     <string name="hint_group_ip">Group/Unicast IP</string>
     <string name="hint_port">Port</string>
     <string name="label_unicast">Send Unicast (instead of Multicast)</string>
-    <string name="ptt_hold">HOLD TO TALK</string>
-    <string name="ptt_speaking">RELEASE TO STOP</string>
 
-    <!-- Robot control -->
-    <string name="section_robot_control">Robot Control (UDP)</string>
-    <string name="hint_robot_ip">Robot Control IP</string>
-    <string name="btn_save_robot">Save Robot Target</string>
+    <!-- PTT — Robot side -->
+    <string name="ptt_robot_hold">🤖 HOLD TO TALK / MOVE (ROBOT)</string>
+    <string name="ptt_robot_speaking">🤖 RELEASE TO STOP (ROBOT)</string>
+    <string name="cd_ptt_robot">Hold to talk to robot: ask anything or command motions</string>
 
-    <!-- Motions -->
-    <string name="section_motions">Motions</string>
-    <string name="motion_shake">Shake Hands</string>
-    <string name="motion_salute">Military Salute</string>
-    <string name="motion_welcome">Welcome Visitors</string>
+    <!-- PTT — Database side -->
+    <string name="ptt_db_hold">🗄️ HOLD TO ASK DATABASE</string>
+    <string name="ptt_db_speaking">🗄️ RELEASE TO STOP (DATABASE)</string>
+    <string name="cd_ptt_db">Hold to talk to database service</string>
+
+    <!-- Robot id -->
+    <string name="hint_robot_id">Robot ID (e.g., hasan)</string>
+    <string name="btn_save_robot">Save Robot ID</string>
+    <string name="toast_saved_robot_id">Saved Robot ID: %1$s</string>
+
+    <!-- Motion content descriptions (icons are emoji) -->
+    <string name="cd_motion_shake">Shake hands motion</string>
+    <string name="cd_motion_salute">Military salute motion</string>
+    <string name="cd_motion_welcome">Welcome visitors motion</string>
+
+    <!-- Errors -->
+    <string name="err_mic_perm">Microphone permission required.</string>
 </resources>
+

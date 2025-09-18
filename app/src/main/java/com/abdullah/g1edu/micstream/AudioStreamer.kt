@@ -13,7 +13,6 @@ import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class AudioStreamer(
@@ -48,7 +47,7 @@ class AudioStreamer(
     }
 
     private fun runLoop() {
-        TrafficStats.setThreadStatsTag(0xA11D) // mark for debugging
+        TrafficStats.setThreadStatsTag(0xA11D)
         var audioRecord: AudioRecord? = null
         var aec: AcousticEchoCanceler? = null
         var ns: NoiseSuppressor? = null
@@ -60,16 +59,14 @@ class AudioStreamer(
         val prevSpeaker = audioManager.isSpeakerphoneOn
 
         try {
-            // Prefer voice communication mode for better acoustic pipeline
             audioManager.mode = AudioManager.MODE_IN_COMMUNICATION
-            audioManager.isSpeakerphoneOn = true // typical for handheld; change if using headset
+            audioManager.isSpeakerphoneOn = true
         } catch (_: Exception) { }
 
         try {
             val source = if (preferVoiceComm) MediaRecorder.AudioSource.VOICE_COMMUNICATION
                          else MediaRecorder.AudioSource.VOICE_RECOGNITION
 
-            // Try 24k first, fall back to 48k, 44.1k, 16k
             val desired = listOf(BuildConfig.TARGET_SR, 48000, 44100, 16000)
             var chosenRate = 0
             var minBuf = 0
@@ -93,7 +90,7 @@ class AudioStreamer(
 
             val frameMs = BuildConfig.FRAME_MS
             val inSamplesPerFrame = (chosenRate * frameMs) / 1000
-            val outSamplesPerFrame = (BuildConfig.TARGET_SR * frameMs) / 1000 // 480 samples
+            val outSamplesPerFrame = (BuildConfig.TARGET_SR * frameMs) / 1000
             val frameBytes = outSamplesPerFrame * 2
 
             val format = AudioFormat.Builder()
@@ -113,7 +110,6 @@ class AudioStreamer(
                 running.set(false); return
             }
 
-            // Enable AEC/NS/AGC if available
             val sessionId = audioRecord.audioSessionId
             if (AcousticEchoCanceler.isAvailable()) {
                 aec = AcousticEchoCanceler.create(sessionId)
@@ -136,7 +132,6 @@ class AudioStreamer(
             audioRecord.startRecording()
             onLog("Recording at ${chosenRate} Hz (target ${BuildConfig.TARGET_SR} Hz).")
 
-            // UDP socket
             socket = DatagramSocket()
             socket.soTimeout = 0
             val targetAddr = InetAddress.getByName(if (useUnicast) unicastIp else groupIp)
@@ -145,18 +140,15 @@ class AudioStreamer(
             val outBuf = ShortArray(outSamplesPerFrame)
             val outBytes = ByteArray(frameBytes)
 
-            // For 48k -> 24k, do simple 2:1 average downsample (better than drop)
             fun downsample2to1(src: ShortArray, dst: ShortArray) {
                 val n = dst.size
                 for (i in 0 until n) {
                     val a = src[2 * i].toInt()
                     val b = src[2 * i + 1].toInt()
-                    val avg = ((a + b) / 2)
-                    dst[i] = avg.toShort()
+                    dst[i] = ((a + b) / 2).toShort()
                 }
             }
 
-            // Generic linear resample (simple, ok for speech)
             fun linearResample(src: ShortArray, srcRate: Int, dst: ShortArray, dstRate: Int) {
                 val ratio = srcRate.toDouble() / dstRate.toDouble()
                 val nDst = dst.size
@@ -181,7 +173,6 @@ class AudioStreamer(
                     break
                 }
 
-                // Resample to 24k if needed
                 when {
                     chosenRate == BuildConfig.TARGET_SR && read == outBuf.size -> {
                         System.arraycopy(inBuf, 0, outBuf, 0, outBuf.size)
@@ -190,12 +181,10 @@ class AudioStreamer(
                         downsample2to1(inBuf, outBuf)
                     }
                     else -> {
-                        // Fallback linear resample per-frame
                         linearResample(inBuf, chosenRate, outBuf, BuildConfig.TARGET_SR)
                     }
                 }
 
-                // Little-endian PCM16 payload
                 ByteBuffer.wrap(outBytes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer()
                     .put(outBuf, 0, outBuf.size)
 
@@ -207,7 +196,7 @@ class AudioStreamer(
             onLog("Streamer error: ${ex.message ?: ex.javaClass.simpleName}")
             Log.e("G1MicStream", "Streamer error", ex)
         } finally {
-            try { threadSleep(10) } catch (_: Exception) { }
+            try { Thread.sleep(10) } catch (_: Exception) { }
             try { socket?.close() } catch (_: Exception) { }
             try { (context.getSystemService(Context.AUDIO_SERVICE) as AudioManager).apply {
                 mode = prevMode
@@ -219,8 +208,5 @@ class AudioStreamer(
             try { audioRecord?.stop(); audioRecord?.release() } catch (_: Exception) { }
         }
     }
-
-    private fun threadSleep(ms: Long) {
-        try { Thread.sleep(ms) } catch (_: InterruptedException) { }
-    }
 }
+

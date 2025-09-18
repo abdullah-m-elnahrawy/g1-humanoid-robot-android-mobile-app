@@ -10,26 +10,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <!-- Audio Stream -->
+        <!-- Section: Audio Stream (dual PTT) -->
         <TextView
-            android:text="Audio Stream"
+            android:text="@string/section_audio"
             android:textStyle="bold"
             android:textSize="22sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
+        <!-- Legacy fields kept (hidden) to minimize code churn -->
         <LinearLayout
             android:orientation="horizontal"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp">
+            android:layout_marginTop="8dp">
 
             <EditText
                 android:id="@+id/txtGroupIp"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:hint="239.255.0.1"
+                android:hint="@string/hint_group_ip"
                 android:inputType="text"
                 android:maxLines="1" />
 
@@ -41,24 +43,35 @@
                 android:id="@+id/txtPort"
                 android:layout_width="96dp"
                 android:layout_height="wrap_content"
-                android:hint="5555"
+                android:hint="@string/hint_port"
                 android:inputType="number"
                 android:maxLines="1" />
         </LinearLayout>
 
         <CheckBox
             android:id="@+id/chkUnicast"
+            android:visibility="gone"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Send Unicast (instead of Multicast)"
-            android:layout_marginTop="8dp" />
+            android:text="@string/label_unicast"
+            android:layout_marginTop="4dp" />
+
+        <!-- Dual PTT buttons -->
+        <Button
+            android:id="@+id/btnPTTRobot"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="12dp"
+            android:text="@string/ptt_robot_hold"
+            android:contentDescription="@string/cd_ptt_robot" />
 
         <Button
-            android:id="@+id/btnPTT"
+            android:id="@+id/btnPTTDb"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="16dp"
-            android:text="HOLD TO TALK" />
+            android:layout_height="64dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/ptt_db_hold"
+            android:contentDescription="@string/cd_ptt_db" />
 
         <View
             android:layout_width="match_parent"
@@ -67,9 +80,9 @@
             android:layout_marginTop="20dp"
             android:layout_marginBottom="12dp" />
 
-        <!-- Robot Control (UDP over multicast, uses robot_id only) -->
+        <!-- Section: Robot Control (UDP) -->
         <TextView
-            android:text="Robot Control (UDP)"
+            android:text="@string/section_robot_control"
             android:textStyle="bold"
             android:textSize="20sp"
             android:layout_width="wrap_content"
@@ -79,7 +92,7 @@
             android:id="@+id/txtRobotId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Robot ID (e.g., hasan)"
+            android:hint="@string/hint_robot_id"
             android:inputType="text"
             android:maxLines="1"
             android:layout_marginTop="10dp" />
@@ -88,7 +101,7 @@
             android:id="@+id/btnSaveRobot"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Save Robot ID"
+            android:text="@string/btn_save_robot"
             android:layout_marginTop="12dp" />
 
         <View
@@ -98,8 +111,9 @@
             android:layout_marginTop="18dp"
             android:layout_marginBottom="10dp" />
 
+        <!-- Section: Motions (icons only) -->
         <TextView
-            android:text="Motions"
+            android:text="@string/section_motions"
             android:textStyle="bold"
             android:textSize="20sp"
             android:layout_width="wrap_content"
@@ -111,31 +125,40 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp">
 
+            <!-- 🤝 Shake -->
             <Button
                 android:id="@+id/btnShake"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:layout_weight="1"
-                android:text="Shake Hands" />
+                android:text="🤝"
+                android:textSize="24sp"
+                android:contentDescription="@string/cd_motion_shake" />
 
             <Space
                 android:layout_width="12dp"
                 android:layout_height="match_parent" />
 
+            <!-- 🫡 Salute -->
             <Button
                 android:id="@+id/btnSalute"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="64dp"
                 android:layout_weight="1"
-                android:text="Military Salute" />
+                android:text="🫡"
+                android:textSize="24sp"
+                android:contentDescription="@string/cd_motion_salute" />
         </LinearLayout>
 
+        <!-- 🤗 Welcome -->
         <Button
             android:id="@+id/btnWelcome"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
+            android:layout_height="64dp"
             android:layout_marginTop="12dp"
-            android:text="Welcome Visitors" />
+            android:text="🤗"
+            android:textSize="24sp"
+            android:contentDescription="@string/cd_motion_welcome" />
 
         <Space
             android:layout_width="match_parent"

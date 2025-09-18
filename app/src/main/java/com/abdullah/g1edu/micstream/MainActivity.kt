@@ -10,26 +10,36 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 
-// Multicast defaults for the mic stream (match robot listener)
-private const val defaultGroupIp = "239.255.0.1"
-private const val defaultPort = 5555
-
+/**
+ * UI now exposes TWO isolated PTT buttons:
+ *  - 🤖 Robot: streams to BuildConfig.ROBOT_GROUP_IP:ROBOT_PORT (239.255.0.1:5555)
+ *  - 🗄️ Database: streams to BuildConfig.DB_GROUP_IP:DB_PORT (239.255.0.3:5556)
+ *
+ * Only one streamer runs at a time; pressing one stops the other.
+ * Motion buttons use emoji icons for a language-agnostic UI.
+ */
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var streamer: AudioStreamer
+    // Two independent streamers (isolated multicast groups)
+    private lateinit var streamerRobot: AudioStreamer
+    private lateinit var streamerDb: AudioStreamer
+
     private lateinit var motion: MotionController
 
-    // UI
+    // (Kept for compatibility; not used for routing anymore, and hidden in UI)
     private lateinit var txtGroupIp: EditText
     private lateinit var txtPort: EditText
     private lateinit var chkUnicast: CheckBox
-    private lateinit var btnPTT: Button
+
+    // PTT buttons
+    private lateinit var btnPTTRobot: Button
+    private lateinit var btnPTTDb: Button
 
     // Robot ID (for control multicast)
     private lateinit var txtRobotId: EditText
     private lateinit var btnSaveRobot: Button
 
-    // Motion buttons
+    // Motion buttons (icons only)
     private lateinit var btnShake: Button
     private lateinit var btnSalute: Button
     private lateinit var btnWelcome: Button
@@ -37,13 +47,15 @@ class MainActivity : AppCompatActivity() {
     private val reqPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (!granted) Toast.makeText(this, "Microphone permission required.", Toast.LENGTH_LONG).show()
+        if (!granted) {
+            Toast.makeText(this, getString(R.string.err_mic_perm), Toast.LENGTH_LONG).show()
+        }
+        // If needed you can auto-retry start on next press; we keep UX simple.
     }
 
-    private fun haveMicPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+    private fun haveMicPermission(): Boolean =
+        ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
                 PackageManager.PERMISSION_GRANTED
-    }
 
     private fun requestMic() {
         reqPermission.launch(Manifest.permission.RECORD_AUDIO)
@@ -55,10 +67,13 @@ class MainActivity : AppCompatActivity() {
 
         motion = MotionController(this)
 
+        // Bind UI
         txtGroupIp = findViewById(R.id.txtGroupIp)
         txtPort    = findViewById(R.id.txtPort)
         chkUnicast = findViewById(R.id.chkUnicast)
-        btnPTT     = findViewById(R.id.btnPTT)
+
+        btnPTTRobot = findViewById(R.id.btnPTTRobot)
+        btnPTTDb    = findViewById(R.id.btnPTTDb)
 
         txtRobotId   = findViewById(R.id.txtRobotId)
         btnSaveRobot = findViewById(R.id.btnSaveRobot)
@@ -67,9 +82,9 @@ class MainActivity : AppCompatActivity() {
         btnSalute  = findViewById(R.id.btnSalute)
         btnWelcome = findViewById(R.id.btnWelcome)
 
-        // Pre-fill (and effectively ignore) IP/port UI — multicast only
-        txtGroupIp.setText(defaultGroupIp)
-        txtPort.setText(defaultPort.toString())
+        // Hide legacy inputs (we route via constants)
+        txtGroupIp.visibility = View.GONE
+        txtPort.visibility = View.GONE
         chkUnicast.visibility = View.GONE
 
         // Restore & save robot_id
@@ -77,47 +92,83 @@ class MainActivity : AppCompatActivity() {
         btnSaveRobot.setOnClickListener {
             val id = txtRobotId.text.toString().ifBlank { "hasan" }
             motion.saveRobotId(id)
-            Toast.makeText(this, "Saved Robot ID: $id", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.toast_saved_robot_id, id), Toast.LENGTH_SHORT).show()
         }
 
-        // Build the AudioStreamer using your constructor signature
-        streamer = AudioStreamer(
-            /* ctx = */ this,
-            /* groupIp = */ defaultGroupIp,
-            /* port = */ defaultPort,
-            /* useUnicast = */ false,
-            /* unicastIp = */ "",
-            /* preferVoiceComm = */ true,
-            /* onLog = */ { _ -> },
-            /* onState = */ { _ -> }
+        // Build streamers (each goes to a different multicast group)
+        streamerRobot = AudioStreamer(
+            context = this,
+            groupIp = BuildConfig.ROBOT_GROUP_IP,
+            port = BuildConfig.ROBOT_PORT,
+            useUnicast = false,
+            unicastIp = "",
+            preferVoiceComm = true,
+            onLog = { /* no-op */ },
+            onState = { /* no-op */ }
+        )
+        streamerDb = AudioStreamer(
+            context = this,
+            groupIp = BuildConfig.DB_GROUP_IP,
+            port = BuildConfig.DB_PORT,
+            useUnicast = false,
+            unicastIp = "",
+            preferVoiceComm = true,
+            onLog = { /* no-op */ },
+            onState = { /* no-op */ }
         )
 
-        // PTT
-        btnPTT.setOnTouchListener { _: View, event: MotionEvent ->
+        // Wire PTT listeners (mutually exclusive)
+        btnPTTRobot.setOnTouchListener { _: View, event: MotionEvent ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    if (!haveMicPermission()) requestMic()
-                    streamer.start()
-                    btnPTT.text = getString(R.string.ptt_speaking)
-                    btnPTT.isPressed = true
+                    if (!haveMicPermission()) {
+                        requestMic()
+                        return@setOnTouchListener true
+                    }
+                    if (streamerDb.isRunning()) streamerDb.stop()
+                    streamerRobot.start()
+                    btnPTTRobot.text = getString(R.string.ptt_robot_speaking)
+                    btnPTTRobot.isPressed = true
                 }
                 MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    streamer.stop()
-                    btnPTT.text = getString(R.string.ptt_hold)
-                    btnPTT.isPressed = false
+                    streamerRobot.stop()
+                    btnPTTRobot.text = getString(R.string.ptt_robot_hold)
+                    btnPTTRobot.isPressed = false
                 }
             }
             true
         }
 
-        // Motion buttons → multicast JSON (no IP typing), includes robot_id
+        btnPTTDb.setOnTouchListener { _: View, event: MotionEvent ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (!haveMicPermission()) {
+                        requestMic()
+                        return@setOnTouchListener true
+                    }
+                    if (streamerRobot.isRunning()) streamerRobot.stop()
+                    streamerDb.start()
+                    btnPTTDb.text = getString(R.string.ptt_db_speaking)
+                    btnPTTDb.isPressed = true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    streamerDb.stop()
+                    btnPTTDb.text = getString(R.string.ptt_db_hold)
+                    btnPTTDb.isPressed = false
+                }
+            }
+            true
+        }
+
+        // Motion buttons → multicast JSON (includes robot_id)
         btnShake.setOnClickListener  { motion.sendMotionFile("shake_hands.seq") }
         btnSalute.setOnClickListener { motion.sendMotionFile("military_salute.seq") }
         btnWelcome.setOnClickListener{ motion.sendMotionFile("welcome_visitors.seq") }
     }
 
     override fun onDestroy() {
-        try { streamer.stop() } catch (_: Throwable) {}
+        try { streamerRobot.stop() } catch (_: Throwable) {}
+        try { streamerDb.stop() } catch (_: Throwable) {}
         super.onDestroy()
     }
 }

@@ -10,22 +10,11 @@ import java.net.InetAddress
 import java.nio.charset.Charset
 import java.util.concurrent.Executors
 
-/**
- * MotionController
- * - Sends UDP JSON to the robot over MULTICAST (no IP needed).
- * - Matches the robot listener: CONTROL_MCAST_IP=239.255.0.2, CONTROL_UDP_PORT=5577
- * - Includes robot_id so multiple robots can share the same Wi-Fi.
- */
 class MotionController(private val ctx: Context) {
-
     companion object {
         private const val TAG = "MotionController"
-
-        // These must match the robot's runtime.env
         private const val DEFAULT_CTRL_GROUP = "239.255.0.2"
         private const val DEFAULT_CTRL_PORT  = 5577
-
-        // SharedPreferences
         private const val PREFS = "g1.motion.prefs"
         private const val KEY_ROBOT_ID = "robot_id"
         private const val DEFAULT_ROBOT_ID = "hasan"
@@ -33,10 +22,9 @@ class MotionController(private val ctx: Context) {
 
     private val io = Executors.newSingleThreadExecutor()
 
-    fun currentRobotId(): String {
-        return ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    fun currentRobotId(): String =
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getString(KEY_ROBOT_ID, DEFAULT_ROBOT_ID) ?: DEFAULT_ROBOT_ID
-    }
 
     fun saveRobotId(id: String) {
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -69,9 +57,9 @@ class MotionController(private val ctx: Context) {
         io.execute {
             var s: DatagramSocket? = null
             try {
-                val group = InetAddress.getByName(DEFAULT_CTRL_GROUP) // multicast
+                val group = InetAddress.getByName(DEFAULT_CTRL_GROUP)
                 val pkt = DatagramPacket(bytes, bytes.size, group, DEFAULT_CTRL_PORT)
-                s = DatagramSocket() // for sending, plain DatagramSocket is fine
+                s = DatagramSocket()
                 s.send(pkt)
                 Log.i(TAG, "Sent ${payload.optString("type")} to $DEFAULT_CTRL_GROUP:$DEFAULT_CTRL_PORT (${bytes.size} bytes)")
             } catch (e: Exception) {

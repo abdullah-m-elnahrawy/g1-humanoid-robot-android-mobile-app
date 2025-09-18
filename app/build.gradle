@@ -14,14 +14,20 @@ android {
         versionCode 1
         versionName "1.0.0"
 
-        // We define custom BuildConfig fields; keep buildConfig enabled.
+        // Audio frame size / target sample rate for the streamer
         buildConfigField "int", "FRAME_MS", "20"
         buildConfigField "int", "TARGET_SR", "24000"
-        buildConfigField "String", "DEFAULT_GROUP_IP", "\"239.255.0.1\""
-        buildConfigField "int", "DEFAULT_PORT", "5555"
+
+        // Multicast targets (keep these centralized to avoid magic numbers)
+        // Your program (robot control / motions / general assistant)
+        buildConfigField "String", "ROBOT_GROUP_IP", "\"239.255.0.1\""
+        buildConfigField "int", "ROBOT_PORT", "5555"
+
+        // Friend's voice_chat program (DB Q&A)
+        buildConfigField "String", "DB_GROUP_IP", "\"239.255.0.3\""
+        buildConfigField "int", "DB_PORT", "5556"
     }
 
-    // >>> ADD THIS <<<
     buildFeatures {
         buildConfig true
     }
@@ -50,3 +56,4 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "com.google.android.material:material:1.12.0"
 }
+
