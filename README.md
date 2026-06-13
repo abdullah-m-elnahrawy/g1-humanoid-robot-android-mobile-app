@@ -1,1 +1,2 @@
 # g1-humanoid-robot-android-mobile-app
+An Android mobile application for controlling the Unitree G1 humanoid robot through a user-friendly interface, enabling motion execution via button inputs and voice-triggered commands. The system was designed to overcome robot noise affecting the robot’s built-in microphone by shifting command input to a mobile-based control interface, improving reliability and usability in real-world conditions.
